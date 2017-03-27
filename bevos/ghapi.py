@@ -51,7 +51,12 @@ def make_release_endpoint(owner: str, repo: str) -> str:
 def endpoint_url(github_url: str, endpoint: str) -> str:
     return urllib.parse.urljoin(github_url, endpoint)
 
-def perform_release(owner: str, repo: str, tag: str, target_sha: str, token_path:str, description: str, dryrun: bool) -> GhResult:
+def artifact_upload_url(release_response: requests.Response, artifact_path: str) -> str:
+    response = release_response.json()
+    url_template = response["assets_url"]
+    return "{url}?name={filename}".format(url=url_template, filename=os.path.basename(artifact_path))
+
+def perform_release(owner: str, repo: str, tag: str, target_sha: str, artifact_path: Optional[str], token_path:str, description: str, dryrun: bool) -> GhResult:
     endpoint = make_release_endpoint(owner, repo)
     url = endpoint_url("https://api.github.com/", endpoint)
     util.message("POST {}".format(url))
@@ -61,4 +66,27 @@ def perform_release(owner: str, repo: str, tag: str, target_sha: str, token_path
 
     response = requests.post(url, data=json.dumps(data), headers=header)
     util.message(response.text)
+
+    if artifact_path and response.status_code < 300:
+        artifact_url = artifact_upload_url(response, artifact_path)
+        result = upload_artifact(artifact_url, artifact_path, token_path)
+        if not result.success:
+            raise click.ClickException("Could not upload {}".format(artifact_path))
+
+    return GhResult(response)
+
+def upload_artifact(url: str, path: str, token_path: str) -> GhResult:
+    click.echo("Uploading artifact...")
+    headers = auth_header(token(token_path))
+    headers["Content-Type"] = "application/octet-stream"
+
+    try:
+        with open(path) as artifact:
+            response = requests.post(url, headers=headers)
+
+    except OSError as e:
+        raise click.ClickException(e.strerror)
+
+    util.message(response.text)
+
     return GhResult(response)

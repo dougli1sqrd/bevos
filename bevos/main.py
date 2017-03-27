@@ -20,7 +20,8 @@ def cli() -> None:
 @click.option("--dry-run", is_flag=True)
 @click.option("--description", default="")
 @click.option("--token-path", envvar="GH_TOKEN_PATH", type=click.Path(exists=True))
-def release(owner: str, repo: str, tag: str, target: str, verbose: bool, dry_run: bool, description: str, token_path: Optional[str]) -> None:
+@click.option("--artifact", type=click.Path(exists=True))
+def release(owner: str, repo: str, tag: str, target: str, verbose: bool, dry_run: bool, description: str, token_path: Optional[str], artifact: Optional[str]) -> None:
 
     util._messenger.setVerbosity(verbose)
 
@@ -30,7 +31,7 @@ def release(owner: str, repo: str, tag: str, target: str, verbose: bool, dry_run
     click.echo("I'm doing a release! to {repo}".format(repo=repo))
     endpoint = ghapi.make_release_endpoint(owner, repo)
     url = ghapi.endpoint_url("https://api.github.com", endpoint)
-    result = ghapi.perform_release(owner, repo, tag, target, token_path, description, dry_run)
+    result = ghapi.perform_release(owner, repo, tag, target, artifact, token_path, description, dry_run)
     click.echo(result.message())
     if not result.success:
         sys.exit(1)
