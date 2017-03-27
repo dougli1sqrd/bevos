@@ -5,7 +5,7 @@ from typing import Union, IO, Any, Optional
 class OpenResult(object):
 
     def __init__(self) -> None:
-        self.file = None # type: Optional[IO[Any]]
+        self.contents = None # type: Optional[str]
         self.error_message = ""
 
 
@@ -21,7 +21,7 @@ class FileContext(object):
             with open(self.path, self.mode) as open_file:
                 self.file = open_file
                 result = OpenResult()
-                result.file = open_file
+                result.contents = open_file.read()
                 return result
 
         except OSError as e:

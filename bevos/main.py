@@ -25,12 +25,12 @@ def release(owner: str, repo: str, tag: str, target: str, verbose: bool, dry_run
 
     click.echo("I'm doing a release! to {repo}".format(repo=repo))
     endpoint = ghapi.make_release_endpoint(owner, repo)
-    url = ghapi.endpoint_url("https://github.com", endpoint)
-    if verbose:
-        click.echo("POST {url}".format(url=url))
-        click.echo(json.dumps(ghapi.make_release_data(tag, target, description, True), indent=4))
+    url = ghapi.endpoint_url("https://api.github.com", endpoint)
+    # if verbose:
+    #     click.echo("POST {url}".format(url=url))
+    #     click.echo(json.dumps(ghapi.make_release_data(tag, target, description, True), indent=4))
 
-    result = ghapi.perform_release(owner, repo, tag, target, description, dry_run)
+    result = ghapi.perform_release(owner, repo, tag, target, token_path, description, dry_run)
     click.echo(result.message())
     if not result.success:
         sys.exit(1)
