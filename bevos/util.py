@@ -1,6 +1,20 @@
 import io
+import click
 
 from typing import Union, IO, Any, Optional
+
+class Messsenger(object):
+
+    def __init__(self) -> None:
+        self.verbose = False
+
+    def message(self, message) -> None:
+        if self.verbose:
+            click.echo(message)
+
+    def setVerbosity(self, verbose: bool) -> None:
+        self.verbose = verbose
+
 
 class OpenResult(object):
 
@@ -35,3 +49,8 @@ class FileContext(object):
 
 def open_file(path: str, mode: str) -> FileContext:
     return FileContext(path, mode)
+
+_messenger = Messsenger()
+
+def message(message) -> None:
+    _messenger.message(message)

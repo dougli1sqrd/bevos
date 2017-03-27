@@ -2,6 +2,7 @@ import urllib.parse
 import requests
 import os
 import json
+import click
 
 from typing import Dict, Union, List, Optional
 
@@ -53,12 +54,11 @@ def endpoint_url(github_url: str, endpoint: str) -> str:
 def perform_release(owner: str, repo: str, tag: str, target_sha: str, token_path:str, description: str, dryrun: bool) -> GhResult:
     endpoint = make_release_endpoint(owner, repo)
     url = endpoint_url("https://api.github.com/", endpoint)
-    print("POST {}".format(url))
+    util.message("POST {}".format(url))
     data = make_release_data(tag, target_sha, description, dryrun)
-    print(json.dumps(data, indent=4))
+    util.message(json.dumps(data, indent=4))
     header = auth_header(token(token_path))
-    print(header)
 
     response = requests.post(url, data=json.dumps(data), headers=header)
-    print(response.text)
+    util.message(response.text)
     return GhResult(response)
