@@ -22,8 +22,8 @@ class GhResult(object):
         else:
             return "Failed to release"
 
-def token(path) -> str:
-    path = os.getenv("GH_TOKEN_PATH", path) # type: str
+def token(path: str) -> str:
+    path = os.getenv("GH_TOKEN_PATH", path) # type: ignore
     with util.open_file(path, "r") as file_result:
         if file_result.contents is None:
             return ""
