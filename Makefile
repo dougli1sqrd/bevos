@@ -3,6 +3,7 @@ ENV=env/bin
 
 all: env
 	mypy bevos --strict-optional
+	nose2 tests
 
 env:
 	python3 -m venv env; \
