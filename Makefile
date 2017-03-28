@@ -10,8 +10,8 @@ env:
 	source env/bin/activate; \
 
 install: requirements.txt env
-	$(ENV)/pip install -r requirements.txt
-	$(ENV)/pip install --editable .
+	$(ENV)/pip3 install -r requirements.txt
+	$(ENV)/pip3 install --editable .
 
 activate:
 	source "source env/bin/activate"; \

@@ -3,7 +3,9 @@ import requests
 import os
 import json
 import click
+import semver
 
+import typing
 from typing import Dict, Union, List, Optional
 
 from bevos import util
@@ -22,6 +24,7 @@ class GhResult(object):
             return "Release successful"
         else:
             return "Failed to release"
+
 
 def token(path: str) -> str:
     path = os.getenv("GH_TOKEN_PATH", path) # type: ignore
@@ -48,16 +51,42 @@ def auth_header(token: str) -> Header:
 def make_release_endpoint(owner: str, repo: str) -> str:
     return "/repos/{owner}/{repo}/releases".format(owner=owner, repo=repo)
 
+def make_latest_release_endpoint(owner: str, repo: str) -> str:
+    return "/repos/{owner}/{repo}/releases/latest".format(owner=owner, repo=repo)
+
 def endpoint_url(github_url: str, endpoint: str) -> str:
     return urllib.parse.urljoin(github_url, endpoint)
 
 def artifact_upload_url(release_response: requests.Response, artifact_path: str) -> str:
     response = release_response.json() # type: Json
-    url_template = response["upload_url"] # type: str
+    url_template = typing.cast(str, response["upload_url"])
     url = url_template.replace("{?name,label}", "?name={filename}".format(filename=os.path.basename(artifact_path)))
     return url
 
-def perform_release(owner: str, repo: str, tag: str, target_sha: str, artifact_path: Optional[str], token_path:str, description: str, dryrun: bool) -> GhResult:
+def bump_version(component: str, version: str) -> str:
+    sem_version = version.replace("v", "")
+    bumped = ""
+    if component == "major":
+        bumped = semver.bump_major(sem_version)
+    elif component == "minor":
+        bumped = semver.bump_minor(sem_version)
+    elif component == "patch":
+        bumped = semver.bump_patch(sem_version)
+    else:
+        bumped = version
+
+    return "v{}".format(bumped)
+
+def increment_repo_version(owner: str, repo: str, component: str, token_path: str) -> str:
+    endpoint = make_latest_release_endpoint(owner, repo)
+    url = endpoint_url("https://api.github.com", endpoint)
+    header = auth_header(token(token_path))
+
+    response = requests.get(url, headers=header)
+    latest = response.json()["tag_name"] # type: str
+    return bump_version(component, latest)
+
+def perform_release(owner: str, repo: str, tag: str, target_sha: str, artifact_path: Optional[str], token_path: str, description: str, dryrun: bool) -> GhResult:
     endpoint = make_release_endpoint(owner, repo)
     url = endpoint_url("https://api.github.com/", endpoint)
     util.message("POST {}".format(url))

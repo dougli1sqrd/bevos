@@ -7,7 +7,8 @@ setup(
     include_package_data=True,
     install_requires=[
         "click==6.7",
-        "requests==2.13.0"
+        "requests==2.13.0",
+        "semantic_version==2.6.0"
     ],
     entry_points='''
         [console_scripts]
