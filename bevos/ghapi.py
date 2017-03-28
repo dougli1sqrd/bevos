@@ -52,9 +52,10 @@ def endpoint_url(github_url: str, endpoint: str) -> str:
     return urllib.parse.urljoin(github_url, endpoint)
 
 def artifact_upload_url(release_response: requests.Response, artifact_path: str) -> str:
-    response = release_response.json()
-    url_template = response["assets_url"]
-    return "{url}?name={filename}".format(url=url_template, filename=os.path.basename(artifact_path))
+    response = release_response.json() # type: Json
+    url_template = response["upload_url"] # type: str
+    url = url_template.replace("{?name,label}", "?name={filename}".format(filename=os.path.basename(artifact_path)))
+    return url
 
 def perform_release(owner: str, repo: str, tag: str, target_sha: str, artifact_path: Optional[str], token_path:str, description: str, dryrun: bool) -> GhResult:
     endpoint = make_release_endpoint(owner, repo)
@@ -80,9 +81,10 @@ def upload_artifact(url: str, path: str, token_path: str) -> GhResult:
     headers = auth_header(token(token_path))
     headers["Content-Type"] = "application/octet-stream"
 
+    util.message(url)
     try:
-        with open(path) as artifact:
-            response = requests.post(url, headers=headers)
+        with open(path, "rb") as artifact:
+            response = requests.post(url, headers=headers, data=artifact)
 
     except OSError as e:
         raise click.ClickException(e.strerror)
